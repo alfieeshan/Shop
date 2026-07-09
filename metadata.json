@@ -1,0 +1,6 @@
+{
+  "name": "AURA",
+  "description": "A premium, minimalist mobile phone showroom in Bangladesh. Customers can discover modern smartphones and premium flagships, search by model or brand, and order directly via WhatsApp connected dynamically to a Supabase backend.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
