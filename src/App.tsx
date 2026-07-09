@@ -1,7 +1,6 @@
 import { useState, useEffect, useRef } from 'react';
 import { Product } from './types';
 import { getProducts, getProductById } from './lib/supabase';
-import SupabaseStatusBanner from './components/SupabaseStatusBanner';
 import HeroSection from './components/HeroSection';
 import ProductCard from './components/ProductCard';
 import ProductDetail from './components/ProductDetail';
@@ -124,9 +123,6 @@ export default function App() {
 
   return (
     <div className="min-h-screen bg-[#FAFAFA] flex flex-col font-sans text-[#111111] antialiased selection:bg-[#EAEAEA]">
-      
-      {/* Sleek Minimalist Status Banner */}
-      <SupabaseStatusBanner />
 
       {/* Minimal Navbar (Apple / Nothing Inspired) */}
       <header className="sticky top-0 z-40 bg-white/85 backdrop-blur-md border-b border-[#EAEAEA]">
