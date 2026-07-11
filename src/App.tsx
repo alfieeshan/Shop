@@ -8,6 +8,13 @@ import SkeletonCard from './components/SkeletonCard';
 import { Search, X, ArrowUpDown } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 
+// Premium Sliders and Interactive Components
+import ProductCarousel from './components/ProductCarousel';
+import InfiniteProductSlider from './components/InfiniteProductSlider';
+import RecentlyAddedSlider from './components/RecentlyAddedSlider';
+import RandomRecommendation from './components/RandomRecommendation';
+import SearchSuggestions from './components/SearchSuggestions';
+
 export default function App() {
   // Navigation State
   const [currentProductId, setCurrentProductId] = useState<string | number | null>(() => {
@@ -17,11 +24,14 @@ export default function App() {
 
   // Product Data States
   const [products, setProducts] = useState<Product[]>([]);
+  const [allProducts, setAllProducts] = useState<Product[]>([]);
   const [selectedProduct, setSelectedProduct] = useState<Product | null>(null);
   
   // Filtering & Interaction States
   const [searchQuery, setSearchQuery] = useState('');
   const [sortBy, setSortBy] = useState<'latest' | 'price-asc' | 'price-desc' | 'name'>('latest');
+  const [showSuggestions, setShowSuggestions] = useState(false);
+  const [mobileShowSuggestions, setMobileShowSuggestions] = useState(false);
   
   // UI States
   const [loading, setLoading] = useState(true);
@@ -64,6 +74,19 @@ export default function App() {
       document.title = "AURA — Premium Mobile Shop";
     }
   }, [selectedProduct]);
+
+  // Fetch all products once on mount for recommendations, search suggestions, and carousel
+  useEffect(() => {
+    async function loadAll() {
+      try {
+        const data = await getProducts({ searchQuery: '', sortBy: 'latest' });
+        setAllProducts(data);
+      } catch (err) {
+        console.error('Error loading static unfiltered set:', err);
+      }
+    }
+    loadAll();
+  }, []);
 
   // Live Query: Fetch products dynamically on search/sort changes (no category filtering)
   useEffect(() => {
@@ -147,6 +170,8 @@ export default function App() {
                   type="text"
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
+                  onFocus={() => setShowSuggestions(true)}
+                  onBlur={() => setTimeout(() => setShowSuggestions(false), 200)}
                   placeholder="Search phones by model or brand..."
                   className="w-full pl-10 pr-4 py-1.5 text-xs bg-[#FAFAFA] border border-[#EAEAEA] rounded-xl focus:bg-white focus:outline-none focus:border-[#111111] transition-colors text-[#111111]"
                 />
@@ -157,6 +182,15 @@ export default function App() {
                   >
                     <X className="w-3.5 h-3.5" />
                   </button>
+                )}
+
+                {showSuggestions && searchQuery && (
+                  <SearchSuggestions 
+                    query={searchQuery}
+                    products={allProducts.length > 0 ? allProducts : products}
+                    onSelect={handleProductClick}
+                    onClose={() => setShowSuggestions(false)}
+                  />
                 )}
               </div>
             )}
@@ -193,10 +227,12 @@ export default function App() {
               exit={{ opacity: 0 }}
               transition={{ duration: 0.3 }}
             >
-              <ProductDetail 
-                product={selectedProduct} 
-                onBack={handleBackToHome} 
-              />
+            <ProductDetail 
+              product={selectedProduct} 
+              onBack={handleBackToHome} 
+              allProducts={allProducts.length > 0 ? allProducts : products}
+              onProductClick={handleProductClick}
+            />
             </motion.div>
           ) : (
             /* HOMEPAGE VIEW */
@@ -209,6 +245,31 @@ export default function App() {
             >
               {/* Hero Section */}
               <HeroSection onExploreClick={scrollToExplore} />
+
+              <div className="max-w-7xl mx-auto px-6 space-y-4">
+                {/* Auto-playing Product Carousel */}
+                <ProductCarousel 
+                  products={allProducts.length > 0 ? allProducts : products} 
+                  onProductClick={handleProductClick} 
+                />
+
+                {/* Infinite horizontal product slider */}
+                <div className="py-4 space-y-2 border-y border-[#EAEAEA]">
+                  <p className="text-[10px] font-bold uppercase tracking-widest text-[#999999] text-left px-1">
+                    Live Collection Spotlight
+                  </p>
+                  <InfiniteProductSlider 
+                    products={allProducts.length > 0 ? allProducts : products} 
+                    onProductClick={handleProductClick} 
+                  />
+                </div>
+
+                {/* Recently Added Auto Slider */}
+                <RecentlyAddedSlider 
+                  products={allProducts.length > 0 ? allProducts : products} 
+                  onProductClick={handleProductClick} 
+                />
+              </div>
 
               {/* Products Catalog Display Area */}
               <section ref={exploreRef} className="max-w-7xl mx-auto px-6 py-16 md:py-24 space-y-12">
@@ -236,6 +297,8 @@ export default function App() {
                         type="text"
                         value={searchQuery}
                         onChange={(e) => setSearchQuery(e.target.value)}
+                        onFocus={() => setMobileShowSuggestions(true)}
+                        onBlur={() => setTimeout(() => setMobileShowSuggestions(false), 200)}
                         placeholder="Search model or brand..."
                         className="w-full pl-10 pr-8 py-2 text-xs bg-white border border-[#EAEAEA] rounded-xl focus:outline-none focus:border-[#111111] transition-colors text-[#111111]"
                       />
@@ -246,6 +309,15 @@ export default function App() {
                         >
                           <X className="w-3.5 h-3.5" />
                         </button>
+                      )}
+
+                      {mobileShowSuggestions && searchQuery && (
+                        <SearchSuggestions 
+                          query={searchQuery}
+                          products={allProducts.length > 0 ? allProducts : products}
+                          onSelect={handleProductClick}
+                          onClose={() => setMobileShowSuggestions(false)}
+                        />
                       )}
                     </div>
 
@@ -414,6 +486,12 @@ export default function App() {
           </motion.div>
         )}
       </AnimatePresence>
+
+      {/* Global recommendations */}
+      <RandomRecommendation 
+        products={allProducts.length > 0 ? allProducts : products} 
+        onProductClick={handleProductClick} 
+      />
 
     </div>
   );

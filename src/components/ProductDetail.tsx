@@ -1,22 +1,36 @@
 import { useState, useEffect } from 'react';
 import { Product } from '../types';
-import { ArrowLeft, ChevronLeft, ChevronRight, Maximize2, X } from 'lucide-react';
+import { ArrowLeft, ChevronLeft, ChevronRight, Maximize2, X, ArrowUpRight } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import { normalizeProductImages } from '../utils/productNormalizer';
 
 interface ProductDetailProps {
   product: Product;
   onBack: () => void;
+  allProducts: Product[];
+  onProductClick: (id: string | number) => void;
 }
 
-export default function ProductDetail({ product, onBack }: ProductDetailProps) {
+export default function ProductDetail({ product, onBack, allProducts, onProductClick }: ProductDetailProps) {
   const imagesList = normalizeProductImages(product.images);
   const [activeImageIndex, setActiveImageIndex] = useState(0);
   const [isLightboxOpen, setIsLightboxOpen] = useState(false);
 
+  // Filter other products for "You May Also Like"
+  const relatedProducts = allProducts
+    .filter((p) => String(p.id) !== String(product.id))
+    .sort((a, b) => {
+      // Prioritize same brand/category
+      const aSameBrand = a.category === product.category ? 1 : 0;
+      const bSameBrand = b.category === product.category ? 1 : 0;
+      return bSameBrand - aSameBrand;
+    })
+    .slice(0, 6);
+
   // Scroll to top when detail page opens
   useEffect(() => {
-    window.scrollTo({ top: 0 });
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+    setActiveImageIndex(0);
   }, [product]);
 
   // Keyboard navigation for slider and lightbox
@@ -225,6 +239,65 @@ Please provide more information.`;
         </div>
 
       </div>
+
+      {/* YOU MAY ALSO LIKE SLIDER */}
+      {relatedProducts.length > 0 && (
+        <div className="mt-20 pt-12 border-t border-[#EAEAEA] space-y-8 text-left">
+          <div className="space-y-1">
+            <h3 className="text-xl font-sans font-medium text-[#111111] tracking-tight">
+              You May Also Like
+            </h3>
+            <p className="text-xs text-[#666666] font-light">
+              Hand-selected premium alternatives of authentic mobile flagships
+            </p>
+          </div>
+
+          <div className="flex gap-6 overflow-x-auto pb-4 scrollbar-none snap-x scroll-smooth">
+            {relatedProducts.map((item) => {
+              const itemImages = normalizeProductImages(item.images);
+              const displayImage = item.image_url || itemImages[0];
+              const itemPrice = item.price !== undefined && item.price !== null
+                ? `৳${new Intl.NumberFormat('en-BD', { minimumFractionDigits: 0 }).format(item.price)}`
+                : 'Price on Request';
+
+              return (
+                <div
+                  key={item.id}
+                  onClick={() => onProductClick(item.id)}
+                  className="w-[240px] sm:w-[260px] shrink-0 bg-white border border-[#EAEAEA] rounded-2xl overflow-hidden p-4 text-left space-y-4 hover:border-[#111111] transition-all cursor-pointer group snap-start"
+                >
+                  <div className="aspect-[4/3] bg-[#FAFAFA] rounded-xl overflow-hidden p-3 flex items-center justify-center">
+                    <img
+                      src={displayImage}
+                      alt={item.name}
+                      referrerPolicy="no-referrer"
+                      className="w-full h-full object-contain group-hover:scale-105 transition-transform duration-500"
+                    />
+                  </div>
+
+                  <div className="space-y-1.5 min-w-0">
+                    <span className="text-[10px] font-semibold text-[#666666] uppercase tracking-wider block">
+                      {item.category}
+                    </span>
+                    <h4 className="text-xs font-semibold text-[#111111] truncate">
+                      {item.name}
+                    </h4>
+                    <div className="flex items-center justify-between pt-1">
+                      <span className="text-xs font-semibold text-[#111111]">
+                        {itemPrice}
+                      </span>
+                      <span className="text-[10px] font-semibold text-[#111111] inline-flex items-center gap-0.5 group-hover:underline">
+                        <span>View</span>
+                        <ArrowUpRight className="w-3 h-3" />
+                      </span>
+                    </div>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        </div>
+      )}
 
       {/* LIGHTBOX OVERLAY */}
       <AnimatePresence>
